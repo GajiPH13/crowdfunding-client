@@ -177,9 +177,17 @@ Frontend-relevant phases from `PLAN.md`:
 10. Forms — React Hook Form + Zod (done)
 11. Error Handling — error/loading pages, toasts, empty states (done)
 12. API Layer — reusable Axios client
-13. Deployment — Vercel
+13. Deployment — Vercel (done)
 
 **Future (Phase 2, not in MVP):** Stripe payments, credits system, notifications, image uploads, email notifications, pagination.
+
+---
+
+## Deployment
+
+Live: **https://crowdfunding-client-beta.vercel.app**
+
+Zero-config Vercel deploy (Next.js is Vercel's native platform — no code changes needed). Production env vars: `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_BETTER_AUTH_URL` both point at the deployed server, https://crowdfunding-server-three.vercel.app (see `crowdfunding-server`'s README for that repo's own deployment notes — it needed a serverless adapter since Express isn't natively a Vercel target).
 
 ---
 
