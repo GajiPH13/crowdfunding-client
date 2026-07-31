@@ -1,29 +1,38 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { FaGoogle } from "react-icons/fa";
+import { z } from "zod";
 
+import { FormField } from "@/components/form/form-field";
 import { Button, Input } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 
+const registerSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().min(1, "Email is required").email("Enter a valid email"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+type RegisterValues = z.infer<typeof registerSchema>;
+
 export default function RegisterPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterValues>({ resolver: zodResolver(registerSchema) });
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function onSubmit(values: RegisterValues) {
     setError(null);
-    setIsSubmitting(true);
 
-    const { error: signUpError } = await authClient.signUp.email({ name, email, password });
-
-    setIsSubmitting(false);
+    const { error: signUpError } = await authClient.signUp.email(values);
 
     if (signUpError) {
       setError(signUpError.message ?? "Unable to register");
@@ -38,40 +47,18 @@ export default function RegisterPage() {
     <main className="mx-auto flex min-h-full max-w-sm flex-col justify-center gap-6 px-4 py-12">
       <h1 className="text-2xl font-semibold">Register</h1>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          Name
-          <Input
-            type="text"
-            required
-            autoComplete="name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
-        </label>
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <FormField label="Name" error={errors.name}>
+          <Input type="text" autoComplete="name" {...register("name")} />
+        </FormField>
 
-        <label className="flex flex-col gap-1 text-sm">
-          Email
-          <Input
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-          />
-        </label>
+        <FormField label="Email" error={errors.email}>
+          <Input type="email" autoComplete="email" {...register("email")} />
+        </FormField>
 
-        <label className="flex flex-col gap-1 text-sm">
-          Password
-          <Input
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
-        </label>
+        <FormField label="Password" error={errors.password}>
+          <Input type="password" autoComplete="new-password" {...register("password")} />
+        </FormField>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 

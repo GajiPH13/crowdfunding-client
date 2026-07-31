@@ -1,32 +1,45 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
+import { FormField } from "@/components/form/form-field";
 import { Button, Input } from "@/components/ui";
 import { apiFetch } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 
+const contributeSchema = z.object({
+  amount: z
+    .string()
+    .min(1, "Amount is required")
+    .refine((value) => Number(value) > 0, "Amount must be greater than 0"),
+});
+
+type ContributeValues = z.infer<typeof contributeSchema>;
+
 export function ContributeForm({ campaignId }: { campaignId: string }) {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
-  const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ContributeValues>({ resolver: zodResolver(contributeSchema) });
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function onSubmit(values: ContributeValues) {
     setError(null);
-    setIsSubmitting(true);
 
     const res = await apiFetch("/contributions", {
       method: "POST",
-      body: JSON.stringify({ campaignId, amount: Number(amount) }),
+      body: JSON.stringify({ campaignId, amount: Number(values.amount) }),
     });
-
-    setIsSubmitting(false);
 
     if (!res.ok) {
       const body = (await res.json()) as { message?: string };
@@ -34,7 +47,7 @@ export function ContributeForm({ campaignId }: { campaignId: string }) {
       return;
     }
 
-    setAmount("");
+    reset();
     setSuccess(true);
     router.refresh();
   }
@@ -71,19 +84,12 @@ export function ContributeForm({ campaignId }: { campaignId: string }) {
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={handleSubmit(onSubmit)}
       className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 dark:border-gray-800"
     >
-      <label className="flex flex-col gap-1 text-sm">
-        Contribution amount (USD)
-        <Input
-          required
-          type="number"
-          min={1}
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-        />
-      </label>
+      <FormField label="Contribution amount (USD)" error={errors.amount}>
+        <Input type="number" min={1} {...register("amount")} />
+      </FormField>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
