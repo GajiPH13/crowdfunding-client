@@ -2,7 +2,7 @@
 
 Frontend for **CrowdfundX**, a modern crowdfunding platform. Built with Next.js 16 (App Router) and React 19.
 
-> **Status:** MVP in development. Phase 1 (project init) and Phase 2 (Better Auth) are done. See `PLAN.md` for the full roadmap.
+> **Status:** MVP in development. Phase 1 (project init), Phase 2 (Better Auth), and Phase 3 (UI Foundation) are done. See `PLAN.md` for the full roadmap.
 
 Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-server) (Express.js + MongoDB API)
 
@@ -14,7 +14,7 @@ Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-ser
 - React 19
 - TypeScript
 - Tailwind CSS v4
-- HeroUI
+- HeroUI v3 (`@heroui/react` + `@heroui/styles`, React Aria–based, no Provider needed)
 - React Icons (brands/social icons)
 - Gravity UI Icons (dashboard/navigation icons)
 - TanStack Query
@@ -32,15 +32,18 @@ Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-ser
 - `src/lib/auth-client.ts` — Better Auth React client (`useSession`, `signIn`, `signUp`, `signOut`); no context provider needed, since Better Auth's hook isn't Context-based
 - Protected routes via `src/proxy.ts` (Next.js 16's replacement for `middleware.ts`): optimistic cookie-presence redirect for `/dashboard`, redirects logged-in users away from `/login`/`/register`
 - Placeholder `/dashboard` page proving the auth flow end-to-end (the real dashboard shell is Phase 5)
+- `src/components/ui` — reusable components: `Button`, `Card`, `Input`, `Modal`, `Avatar`, `Table`, `Dropdown` (re-exported from HeroUI v3) and a hand-built compound `Navbar` (`Navbar.Brand`/`Navbar.Content`/`Navbar.Item`) since HeroUI v3 doesn't ship one
+- Icon convention wired up: React Icons for brand/social icons (e.g. the Google button), `@gravity-ui/icons` for dashboard/navigation icons (e.g. the dashboard header)
+- `(public)` route group layout — Navbar + footer, wraps `/`, `/login`, `/register`
+- `(dashboard)` route group layout — minimal header (full sidebar shell is Phase 5)
 
 **Planned:**
 
-- Public layout + Dashboard layout, with role-based navigation (Supporter / Creator / Admin)
-- Landing page: Navbar, Hero, Featured Campaigns grid, How It Works, Categories, Why Choose Us, Footer
+- Role-based navigation (Supporter / Creator / Admin)
+- Landing page: Hero, Featured Campaigns grid, How It Works, Categories, Why Choose Us, Footer
 - Campaign pages: list, details, create, edit
 - Contribution form with validation and success state
 - Admin UI: user list + role management, campaign list + delete
-- Reusable component library (HeroUI-based): Button, Card, Input, Modal, Avatar, Table, Navbar, Dropdown
 - Global error/loading pages, toast notifications, empty states
 - Reusable Axios client with auth interceptors
 
@@ -53,13 +56,23 @@ Full task-by-task breakdown lives in [`PLAN.md`](../PLAN.md).
 ```text
 src/
   app/
-    login/page.tsx      # login page
-    register/page.tsx   # register page
-    dashboard/page.tsx  # placeholder protected page
+    (public)/
+      layout.tsx         # Navbar + footer
+      page.tsx           # home (still default create-next-app content, Phase 4 replaces it)
+      login/page.tsx
+      register/page.tsx
+    (dashboard)/
+      layout.tsx         # minimal header (Phase 5 replaces with full shell)
+      dashboard/page.tsx # placeholder protected page
+  components/ui/
+    index.ts             # re-exports HeroUI primitives + our Navbar
+    navbar.tsx            # compound Navbar (Root/Brand/Content/Item)
   lib/
-    auth-client.ts      # Better Auth React client
-  proxy.ts               # Next.js 16 proxy (replaces middleware.ts) — protects /dashboard
+    auth-client.ts        # Better Auth React client
+  proxy.ts                 # Next.js 16 proxy (replaces middleware.ts) — protects /dashboard
 ```
+
+Route groups `(public)`/`(dashboard)` don't affect URLs — `/`, `/login`, `/register`, `/dashboard` are unchanged.
 
 Further feature-based structure (`components/`, `features/`, shared `types/`) will grow as later phases add campaigns, contributions, and admin UI.
 

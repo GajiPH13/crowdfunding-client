@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { Button } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 
 export default function DashboardPage() {
@@ -20,18 +21,18 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-4 px-4">
+    <main className="mx-auto flex min-h-full max-w-2xl flex-col justify-center gap-4 px-4 py-12">
       <h1 className="text-2xl font-semibold">Dashboard</h1>
       <p>
         Signed in as {session.user.email} ({session.user.role})
       </p>
-      <button
-        type="button"
-        onClick={() => authClient.signOut({ fetchOptions: { onSuccess: () => router.push("/") } })}
-        className="w-fit rounded-md border border-gray-300 px-4 py-2 dark:border-gray-700"
+      <Button
+        variant="outline"
+        onPress={() => authClient.signOut({ fetchOptions: { onSuccess: () => router.push("/") } })}
+        className="w-fit"
       >
         Log out
-      </button>
+      </Button>
     </main>
   );
 }
