@@ -30,7 +30,7 @@ Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-ser
 
 - Login (`/login`) and register (`/register`) pages using Better Auth's email/password + Google OAuth
 - `src/lib/auth-client.ts` — Better Auth React client (`useSession`, `signIn`, `signUp`, `signOut`); no context provider needed, since Better Auth's hook isn't Context-based
-- Protected routes via `src/proxy.ts` (Next.js 16's replacement for `middleware.ts`): optimistic cookie-presence redirect for `/dashboard`, redirects logged-in users away from `/login`/`/register`
+- Protected routes handled entirely client-side (no `proxy.ts`/`middleware.ts`): `(dashboard)/layout.tsx` redirects to `/login` if there's no session, and `/login`/`/register` redirect to `/dashboard` if there is one — both via `authClient.useSession()`. A cookie-based proxy check can't work here since the server (auth cookie's domain) and client are deployed on different domains in production; see the deployment section below.
 - `src/components/ui` — reusable components: `Button`, `Card`, `Input`, `Modal`, `Avatar`, `Table`, `Dropdown`, `Drawer`, `Breadcrumbs` (re-exported from HeroUI v3) and a hand-built compound `Navbar` (`Navbar.Brand`/`Navbar.Content`/`Navbar.Item`) since HeroUI v3 doesn't ship one
 - Icon convention wired up: React Icons for brand/social icons (e.g. the Google button), `@gravity-ui/icons` for dashboard/navigation icons (e.g. the dashboard header)
 - `(public)` route group layout — real `SiteNavbar` (Logo, Campaigns link, Login/Register when signed out, Dashboard link + avatar/dropdown menu when signed in)
@@ -120,7 +120,6 @@ src/
     campaign.ts            # Campaign type, mirrors the server's shape
     contribution.ts         # Contribution type (includes the joined campaign)
     user.ts                 # AdminUser type (Better Auth's admin list-users response)
-  proxy.ts                 # Next.js 16 proxy (replaces middleware.ts) — protects /dashboard
 ```
 
 Route groups `(public)`/`(dashboard)` don't affect URLs — `/`, `/login`, `/register`, `/dashboard` are unchanged.
@@ -188,6 +187,8 @@ Frontend-relevant phases from `PLAN.md`:
 Live: **https://crowdfunding-client-beta.vercel.app**
 
 Zero-config Vercel deploy (Next.js is Vercel's native platform — no code changes needed). Production env vars: `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_BETTER_AUTH_URL` both point at the deployed server, https://crowdfunding-server-three.vercel.app (see `crowdfunding-server`'s README for that repo's own deployment notes — it needed a serverless adapter since Express isn't natively a Vercel target).
+
+**Cross-domain auth gotcha:** client and server are on unrelated domains in production (not shared subdomains — different `*.vercel.app` names). The session cookie is set by the server for its own domain, so it's never attached to requests made to the client's own domain — a `proxy.ts`/`middleware.ts` cookie check (the previous approach here) always reads "no session" regardless of actual login state, permanently redirecting `/dashboard` back to `/login`. Route protection is entirely client-side instead (`(dashboard)/layout.tsx`, and matching redirects on `/login`/`/register`), all via `authClient.useSession()`, which fetches the auth server directly and does correctly carry the cookie (once the server sets `SameSite=None` in production — see `crowdfunding-server`'s `src/lib/auth.ts`).
 
 ---
 
