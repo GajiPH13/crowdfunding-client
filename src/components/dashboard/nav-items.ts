@@ -1,4 +1,4 @@
-import { CreditCard, House, LayoutCells, Persons, Wallet } from "@gravity-ui/icons";
+import { ChartLine, CreditCard, House, LayoutCells, Persons, Wallet } from "@gravity-ui/icons";
 
 export interface NavItem {
   label: string;
@@ -19,6 +19,7 @@ const navItemsByRole: Record<string, NavItem[]> = {
   creator: [overview, { label: "My Campaigns", href: "/dashboard/campaigns", icon: Wallet }],
   admin: [
     overview,
+    { label: "Analytics", href: "/dashboard/admin/analytics", icon: ChartLine },
     { label: "Users", href: "/dashboard/admin/users", icon: Persons },
     { label: "Campaigns", href: "/dashboard/admin/campaigns", icon: LayoutCells },
   ],
