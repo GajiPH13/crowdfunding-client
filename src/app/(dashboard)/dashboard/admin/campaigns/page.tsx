@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { CampaignCard } from "@/components/campaign-card";
-import { Button } from "@/components/ui";
+import { Button, toast } from "@/components/ui";
 import { apiFetch } from "@/lib/api";
 import type { Campaign } from "@/types/campaign";
 
@@ -22,7 +22,12 @@ export default function AdminCampaignsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiFetch(`/campaigns/${id}`, { method: "DELETE" }),
+    mutationFn: async (id: string) => {
+      const res = await apiFetch(`/campaigns/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        throw new Error("Unable to delete campaign");
+      }
+    },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Campaign[]>(queryKey);
@@ -33,6 +38,10 @@ export default function AdminCampaignsPage() {
     },
     onError: (_err, _id, context) => {
       if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
+      toast.danger("Unable to delete campaign");
+    },
+    onSuccess: () => {
+      toast.success("Campaign deleted");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });

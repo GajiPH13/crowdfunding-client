@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { CampaignForm, type CampaignFormValues } from "@/components/dashboard/campaign-form";
+import { toast } from "@/components/ui";
 import { apiFetch } from "@/lib/api";
 import type { Campaign } from "@/types/campaign";
 
@@ -29,6 +30,7 @@ export default function EditCampaignPage() {
       return body.message ?? "Unable to update campaign";
     }
 
+    toast.success("Campaign updated");
     router.push("/dashboard/campaigns");
     router.refresh();
   }

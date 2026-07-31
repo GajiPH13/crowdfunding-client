@@ -5,7 +5,7 @@ import { buttonVariants } from "@heroui/styles";
 import Link from "next/link";
 
 import { CampaignCard } from "@/components/campaign-card";
-import { Button } from "@/components/ui";
+import { Button, toast } from "@/components/ui";
 import { apiFetch } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import type { Campaign } from "@/types/campaign";
@@ -26,7 +26,12 @@ export default function MyCampaignsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiFetch(`/campaigns/${id}`, { method: "DELETE" }),
+    mutationFn: async (id: string) => {
+      const res = await apiFetch(`/campaigns/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        throw new Error("Unable to delete campaign");
+      }
+    },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Campaign[]>(queryKey);
@@ -37,6 +42,10 @@ export default function MyCampaignsPage() {
     },
     onError: (_err, _id, context) => {
       if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
+      toast.danger("Unable to delete campaign");
+    },
+    onSuccess: () => {
+      toast.success("Campaign deleted");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });

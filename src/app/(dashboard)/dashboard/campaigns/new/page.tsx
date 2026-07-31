@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { CampaignForm, type CampaignFormValues } from "@/components/dashboard/campaign-form";
+import { toast } from "@/components/ui";
 import { apiFetch } from "@/lib/api";
 
 export default function NewCampaignPage() {
@@ -19,6 +20,7 @@ export default function NewCampaignPage() {
       return body.message ?? "Unable to create campaign";
     }
 
+    toast.success("Campaign created");
     router.push("/dashboard/campaigns");
     router.refresh();
   }

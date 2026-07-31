@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { FormField } from "@/components/form/form-field";
-import { Button, Input } from "@/components/ui";
+import { Button, Input, toast } from "@/components/ui";
 import { apiFetch } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 
@@ -24,7 +24,6 @@ type ContributeValues = z.infer<typeof contributeSchema>;
 export function ContributeForm({ campaignId }: { campaignId: string }) {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const {
     register,
@@ -34,8 +33,6 @@ export function ContributeForm({ campaignId }: { campaignId: string }) {
   } = useForm<ContributeValues>({ resolver: zodResolver(contributeSchema) });
 
   async function onSubmit(values: ContributeValues) {
-    setError(null);
-
     const res = await apiFetch("/contributions", {
       method: "POST",
       body: JSON.stringify({ campaignId, amount: Number(values.amount) }),
@@ -43,7 +40,7 @@ export function ContributeForm({ campaignId }: { campaignId: string }) {
 
     if (!res.ok) {
       const body = (await res.json()) as { message?: string };
-      setError(body.message ?? "Unable to process contribution");
+      toast.danger(body.message ?? "Unable to process contribution");
       return;
     }
 
@@ -90,8 +87,6 @@ export function ContributeForm({ campaignId }: { campaignId: string }) {
       <FormField label="Contribution amount (USD)" error={errors.amount}>
         <Input type="number" min={1} {...register("amount")} />
       </FormField>
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
 
       <Button type="submit" isDisabled={isSubmitting}>
         {isSubmitting ? "Processing…" : "Contribute"}

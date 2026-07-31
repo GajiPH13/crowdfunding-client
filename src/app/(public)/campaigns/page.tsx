@@ -4,7 +4,9 @@ import type { Campaign } from "@/types/campaign";
 
 async function getCampaigns(): Promise<Campaign[]> {
   const res = await apiFetch("/campaigns", { cache: "no-store" });
-  if (!res.ok) return [];
+  if (!res.ok) {
+    throw new Error("Failed to load campaigns");
+  }
   const { data } = (await res.json()) as { data: Campaign[] };
   return data;
 }

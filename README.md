@@ -2,7 +2,7 @@
 
 Frontend for **CrowdfundX**, a modern crowdfunding platform. Built with Next.js 16 (App Router) and React 19.
 
-> **Status:** MVP in development. Phases 1–10 (project init, Better Auth, UI Foundation, Landing Page, Dashboard, Campaign Module, Contributions, Admin, State Management, Forms) are done. See `PLAN.md` for the full roadmap.
+> **Status:** MVP in development. Phases 1–11 (project init, Better Auth, UI Foundation, Landing Page, Dashboard, Campaign Module, Contributions, Admin, State Management, Forms, Error Handling) are done. See `PLAN.md` for the full roadmap.
 
 Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-server) (Express.js + MongoDB API)
 
@@ -43,10 +43,11 @@ Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-ser
 - Admin UI: `/dashboard/admin/users` (list + change role via a native `<select>`) and `/dashboard/admin/campaigns` (list all + delete, reusing `CampaignCard`) — both gated by a shared `(dashboard)/dashboard/admin/layout.tsx` that shows "You don't have access to this page" for non-admins. **No new server endpoints were needed**: users list/role-change call Better Auth's own admin plugin endpoints directly (`/api/auth/admin/list-users`, `/api/auth/admin/set-role`, already mounted and permission-checked by Better Auth itself), and campaign management reuses the existing public `GET /campaigns` and `DELETE /campaigns/:id` (which already allowed admin overrides since Phase 6).
 - TanStack Query: `QueryClient` + `QueryClientProvider` (`src/components/providers.tsx`, wrapped around the whole app in the root layout). Every dashboard list that used to be a manual `useEffect` + `.then()` + `ignore`-flag fetch — My Campaigns, My Contributions, Admin Users, Admin Campaigns — is now a `useQuery`. Their mutations (delete campaign in two places, set-role) use `useMutation` with real optimistic updates: `onMutate` snapshots the cache and writes the expected result immediately (e.g. the row disappears / the role dropdown updates before the server responds), `onError` rolls back to the snapshot, `onSettled` invalidates to resync with the server.
 - Forms: all four forms (login, register, `CampaignForm`, `ContributeForm`) use React Hook Form's `useForm` + `@hookform/resolvers/zod`'s `zodResolver`, each with its own Zod schema defined alongside the component. Shared `FormField` (`src/components/form/form-field.tsx`) wraps a label + input + validation error message — the one reusable piece every form uses, per-field validation messages replace the old plain-`useState`/native `required` attributes. Numeric string fields (campaign goal, contribution amount) stay `z.string()` with a `.refine()` numeric check rather than `z.coerce.number()`, since the API and the rest of the form plumbing already expect a string that gets `Number()`-converted at submit time.
+- Error handling: `src/app/error.tsx` (root error boundary) and `src/app/(dashboard)/error.tsx` (dashboard-scoped, keeps the sidebar/header shell visible) — both log to console and offer a "Try again" button wired to Next's `reset()`. `src/app/loading.tsx`, `(public)/campaigns/loading.tsx`, `(public)/campaigns/[id]/loading.tsx`, and `(dashboard)/loading.tsx` show a HeroUI `Spinner` while a route segment's Server Component data fetch is in flight. The public `/campaigns` list (`src/app/(public)/campaigns/page.tsx`) now throws on a failed fetch instead of silently rendering an empty list, so a real backend outage hits the error boundary rather than looking like "no campaigns yet" — verified by killing the API mid-session and confirming the error page (and recovery on restart).
+- Toast notifications: `src/components/ui/toast.ts` exports `toast.success/danger/warning/info(...)` and a `toastQueue`, backed by HeroUI v3's `ToastQueue`/`ToastProvider` (`src/components/providers.tsx` mounts `<ToastProvider placement="top end" queue={toastQueue} />`). **Important:** HeroUI's own default `toast` singleton wraps every queue update in `document.startViewTransition` + `flushSync`, and that transition never actually flushes in this app (Next 16 dev, Turbopack) — toasts got added to the queue but the toast region never re-rendered to show them. `toast.ts` builds its own `ToastQueue` with `wrapUpdate: (fn) => fn()` to bypass this; always import `toast`/`toastQueue` from `@/components/ui`, not directly from `@heroui/react`. Wired into: login/register auth failures, campaign create/update/delete (success + failure), contribution failures, and admin role-change (success + failure).
 
 **Planned:**
 
-- Global error/loading pages, toast notifications, empty states
 - Reusable Axios client with auth interceptors
 
 Full task-by-task breakdown lives in [`PLAN.md`](../PLAN.md).
@@ -58,6 +59,8 @@ Full task-by-task breakdown lives in [`PLAN.md`](../PLAN.md).
 ```text
 src/
   app/
+    error.tsx            # root error boundary (Try again -> reset())
+    loading.tsx           # root loading fallback (Spinner)
     (public)/
       layout.tsx         # SiteNavbar wrapper
       page.tsx           # landing page — composes the sections below
@@ -65,8 +68,12 @@ src/
       register/page.tsx
       campaigns/
         page.tsx          # public campaign list (Server Component)
+        loading.tsx        # Spinner while the list fetch is in flight
         [id]/page.tsx      # public campaign details (Server Component)
+        [id]/loading.tsx    # Spinner while the details fetch is in flight
     (dashboard)/
+      error.tsx          # dashboard-scoped error boundary (keeps sidebar/header)
+      loading.tsx         # Spinner shown inside the dashboard shell
       layout.tsx         # sidebar + header shell, redirects if no session
       dashboard/
         page.tsx          # overview page
@@ -84,8 +91,9 @@ src/
     form/
       form-field.tsx        # reusable label + input + validation error wrapper
     ui/
-      index.ts           # re-exports HeroUI primitives + our Navbar
+      index.ts           # re-exports HeroUI primitives + our Navbar + toast
       navbar.tsx          # compound Navbar (Root/Brand/Content/Item)
+      toast.ts             # toast/toastQueue — wraps HeroUI's ToastQueue with a working wrapUpdate
     site-navbar.tsx       # the real, auth-aware navbar used in (public)/layout.tsx
     user-menu.tsx         # shared avatar/dropdown (site navbar + dashboard header)
     campaign-card.tsx     # shared campaign card (also exports formatCurrency)
@@ -122,6 +130,8 @@ Route groups `(public)`/`(dashboard)` don't affect URLs — `/`, `/login`, `/reg
 **Trigger components already render a `<button>`:** `Drawer.Trigger`, `Dropdown.Trigger`, `Modal.Trigger` etc. are themselves pressable buttons — don't wrap a `<Button>` inside one (invalid nested `<button>`s, causes a hydration error). Style the trigger directly instead, e.g. `<Drawer.Trigger className={buttonVariants({ variant: "ghost", isIconOnly: true })}>` (see `mobile-nav.tsx`).
 
 **Fetching in a `useEffect`:** ESLint's `react-hooks/set-state-in-effect` rule (part of React 19.2's React Compiler lint rules) flags calling a `useCallback`-wrapped async helper that itself calls `setState` directly from an effect body. All the dashboard list pages that used to hit this have been migrated to `useQuery` (Phase 9) and no longer have the problem — if you add a new client-side fetch, reach for `useQuery`/`useMutation` first rather than a manual effect.
+
+**HeroUI v3's default `toast` singleton doesn't actually render toasts in this app:** it serializes every queue update through `document.startViewTransition` + `flushSync`, and that transition never flushes here (Next 16 dev, Turbopack) — toasts land in the queue but the toast region never re-renders. Always import `toast`/`toastQueue` from `@/components/ui` (backed by `src/components/ui/toast.ts`'s custom `ToastQueue` with `wrapUpdate: (fn) => fn()`), never `toast` directly from `@heroui/react`.
 
 Further feature-based structure (`components/`, `features/`, shared `types/`) will grow as later phases add more UI.
 
@@ -165,7 +175,7 @@ Frontend-relevant phases from `PLAN.md`:
 8. Admin — users page, campaign management UI
 9. State Management — TanStack Query setup
 10. Forms — React Hook Form + Zod (done)
-11. Error Handling — error/loading pages, toasts, empty states
+11. Error Handling — error/loading pages, toasts, empty states (done)
 12. API Layer — reusable Axios client
 13. Deployment — Vercel
 

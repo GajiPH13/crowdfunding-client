@@ -1,12 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { FormField } from "@/components/form/form-field";
-import { Button, Input, TextArea } from "@/components/ui";
+import { Button, Input, TextArea, toast } from "@/components/ui";
 
 const campaignSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -30,7 +29,6 @@ export function CampaignForm({
   submitLabel: string;
   onSubmit: (values: CampaignFormValues) => Promise<string | void>;
 }) {
-  const [error, setError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -47,11 +45,9 @@ export function CampaignForm({
   });
 
   async function handleFormSubmit(values: CampaignFormValues) {
-    setError(null);
-
     const errorMessage = await onSubmit(values);
     if (errorMessage) {
-      setError(errorMessage);
+      toast.danger(errorMessage);
     }
   }
 
@@ -76,8 +72,6 @@ export function CampaignForm({
       <FormField label="Deadline" error={errors.deadline}>
         <Input type="date" {...register("deadline")} />
       </FormField>
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
 
       <Button type="submit" isDisabled={isSubmitting}>
         {isSubmitting ? "Saving…" : submitLabel}

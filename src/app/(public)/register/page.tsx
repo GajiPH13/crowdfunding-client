@@ -3,13 +3,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaGoogle } from "react-icons/fa";
 import { z } from "zod";
 
 import { FormField } from "@/components/form/form-field";
-import { Button, Input } from "@/components/ui";
+import { Button, Input, toast } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 
 const registerSchema = z.object({
@@ -22,7 +21,6 @@ type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -30,12 +28,10 @@ export default function RegisterPage() {
   } = useForm<RegisterValues>({ resolver: zodResolver(registerSchema) });
 
   async function onSubmit(values: RegisterValues) {
-    setError(null);
-
     const { error: signUpError } = await authClient.signUp.email(values);
 
     if (signUpError) {
-      setError(signUpError.message ?? "Unable to register");
+      toast.danger(signUpError.message ?? "Unable to register");
       return;
     }
 
@@ -59,8 +55,6 @@ export default function RegisterPage() {
         <FormField label="Password" error={errors.password}>
           <Input type="password" autoComplete="new-password" {...register("password")} />
         </FormField>
-
-        {error && <p className="text-sm text-red-600">{error}</p>}
 
         <Button type="submit" isDisabled={isSubmitting} fullWidth>
           {isSubmitting ? "Creating account…" : "Register"}

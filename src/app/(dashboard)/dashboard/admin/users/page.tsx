@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { toast } from "@/components/ui";
 import { apiFetch } from "@/lib/api";
 import type { AdminUser } from "@/types/user";
 
@@ -39,8 +40,12 @@ export default function AdminUsersPage() {
       );
       return { previous };
     },
-    onError: (_err, _vars, context) => {
+    onError: (error, _vars, context) => {
       if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
+      toast.danger(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Role updated");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
@@ -50,10 +55,6 @@ export default function AdminUsersPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Users</h1>
-
-      {setRoleMutation.isError && (
-        <p className="text-sm text-red-600">{setRoleMutation.error.message}</p>
-      )}
 
       {users === undefined ? (
         <p className="text-gray-600 dark:text-gray-400">Loading…</p>
