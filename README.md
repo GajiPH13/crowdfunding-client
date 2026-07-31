@@ -2,7 +2,7 @@
 
 Frontend for **CrowdfundX**, a modern crowdfunding platform. Built with Next.js 16 (App Router) and React 19.
 
-> **Status:** MVP in development. Phases 1–6 (project init, Better Auth, UI Foundation, Landing Page, Dashboard, Campaign Module) are done. See `PLAN.md` for the full roadmap.
+> **Status:** MVP in development. Phases 1–7 (project init, Better Auth, UI Foundation, Landing Page, Dashboard, Campaign Module, Contributions) are done. See `PLAN.md` for the full roadmap.
 
 Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-server) (Express.js + MongoDB API)
 
@@ -38,11 +38,11 @@ Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-ser
 - Dashboard shell (`(dashboard)/layout.tsx`): desktop sidebar + mobile drawer nav (`src/components/dashboard/`), header with breadcrumb + user menu, role-based nav items (Supporter/Creator/Admin — see `nav-items.ts`) driven by `session.user.role`
 - Shared `UserMenu` (`src/components/user-menu.tsx`) — avatar + dropdown with name/email/Log out, used in both the site navbar and the dashboard header
 - Campaign UI: public `/campaigns` (list) and `/campaigns/[id]` (details) — Server Components fetching straight from the API, no client-side loading state needed; `/dashboard/campaigns` (my campaigns, client-rendered, `?creator=<id>` filtered) with Create/Edit/Delete; shared `CampaignCard` (`src/components/campaign-card.tsx`) used by all three list views; shared `CampaignForm` (`src/components/dashboard/campaign-form.tsx`) used by both create and edit pages. Forms use plain `useState` (React Hook Form + Zod is Phase 10, not yet adopted) with HeroUI's `Input`/`TextArea`/`Button`.
-- `src/lib/api.ts` — thin `apiFetch()` wrapper (base URL + `credentials: "include"`) used for all campaign API calls; the reusable Axios client is still Phase 12
+- `src/lib/api.ts` — thin `apiFetch()` wrapper (base URL + `credentials: "include"`) used for all campaign and contribution API calls; the reusable Axios client is still Phase 12
+- Contribution UI: `ContributeForm` (`src/components/contribute-form.tsx`) embedded in the campaign details page — prompts login if signed out, validates the amount, shows a success state, and calls `router.refresh()` so the campaign's raised-amount progress bar updates immediately without a full reload. `/dashboard/contributions` lists the current user's contributions (campaign title/category/amount/date, via the server's `$lookup`-joined response) with a link back to each campaign.
 
 **Planned:**
 
-- Contribution form with validation and success state
 - Admin UI: user list + role management, campaign list + delete
 - Global error/loading pages, toast notifications, empty states
 - Reusable Axios client with auth interceptors
@@ -72,6 +72,7 @@ src/
           page.tsx          # my campaigns (client, ?creator=<id>)
           new/page.tsx       # create campaign
           [id]/edit/page.tsx  # edit campaign
+        contributions/page.tsx # my contributions (client)
   components/
     ui/
       index.ts           # re-exports HeroUI primitives + our Navbar
@@ -79,6 +80,7 @@ src/
     site-navbar.tsx       # the real, auth-aware navbar used in (public)/layout.tsx
     user-menu.tsx         # shared avatar/dropdown (site navbar + dashboard header)
     campaign-card.tsx     # shared campaign card (also exports formatCurrency)
+    contribute-form.tsx    # embedded in campaign details — login prompt / form / success state
     landing/
       hero.tsx
       featured-campaigns.tsx  # real fetch to crowdfunding-server (Server Component)
@@ -99,6 +101,7 @@ src/
     api.ts                 # apiFetch() — base URL + credentials wrapper
   types/
     campaign.ts            # Campaign type, mirrors the server's shape
+    contribution.ts         # Contribution type (includes the joined campaign)
   proxy.ts                 # Next.js 16 proxy (replaces middleware.ts) — protects /dashboard
 ```
 

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { formatCurrency } from "@/components/campaign-card";
+import { ContributeForm } from "@/components/contribute-form";
 import { apiFetch } from "@/lib/api";
 import type { Campaign } from "@/types/campaign";
 
@@ -36,6 +37,10 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
       </div>
 
       <p className="mt-6 whitespace-pre-wrap">{campaign.description}</p>
+
+      <div className="mt-8 max-w-sm">
+        <ContributeForm campaignId={campaign._id} />
+      </div>
     </main>
   );
 }
