@@ -1,8 +1,8 @@
 # CrowdfundX — Client
 
-Frontend for **CrowdfundX**, a modern crowdfunding platform. Built with Next.js 15 (App Router) and React 19.
+Frontend for **CrowdfundX**, a modern crowdfunding platform. Built with Next.js 16 (App Router) and React 19.
 
-> **Status:** MVP in development. This repo is currently pre-scaffold — no code has been generated yet. This README describes the planned architecture and setup from the project roadmap (`PLAN.md`) so it's ready to follow once implementation starts.
+> **Status:** MVP in development. Phase 1 (project init) and Phase 2 (Better Auth) are done. See `PLAN.md` for the full roadmap.
 
 Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-server) (Express.js + MongoDB API)
 
@@ -10,7 +10,7 @@ Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-ser
 
 ## Tech Stack
 
-- Next.js 15 (App Router)
+- Next.js 16 (App Router)
 - React 19
 - TypeScript
 - Tailwind CSS v4
@@ -24,9 +24,17 @@ Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-ser
 
 ---
 
-## Planned Features
+## Features
 
-- Login / register pages, session provider, protected routes (Better Auth session cookies)
+**Done:**
+
+- Login (`/login`) and register (`/register`) pages using Better Auth's email/password + Google OAuth
+- `src/lib/auth-client.ts` — Better Auth React client (`useSession`, `signIn`, `signUp`, `signOut`); no context provider needed, since Better Auth's hook isn't Context-based
+- Protected routes via `src/proxy.ts` (Next.js 16's replacement for `middleware.ts`): optimistic cookie-presence redirect for `/dashboard`, redirects logged-in users away from `/login`/`/register`
+- Placeholder `/dashboard` page proving the auth flow end-to-end (the real dashboard shell is Phase 5)
+
+**Planned:**
+
 - Public layout + Dashboard layout, with role-based navigation (Supporter / Creator / Admin)
 - Landing page: Navbar, Hero, Featured Campaigns grid, How It Works, Categories, Why Choose Us, Footer
 - Campaign pages: list, details, create, edit
@@ -40,41 +48,44 @@ Full task-by-task breakdown lives in [`PLAN.md`](../PLAN.md).
 
 ---
 
-## Project Structure (planned)
-
-Feature-based architecture under the Next.js App Router. Exact folder layout will be finalized during scaffolding (`PLAN.md` Task 2); expect roughly:
+## Project Structure
 
 ```text
 src/
-  app/            # routes (App Router)
-  components/     # reusable UI components
-  features/       # feature-scoped logic (auth, campaigns, contributions, admin)
-  lib/            # axios client, query client, utils
-  types/          # shared TypeScript types
+  app/
+    login/page.tsx      # login page
+    register/page.tsx   # register page
+    dashboard/page.tsx  # placeholder protected page
+  lib/
+    auth-client.ts      # Better Auth React client
+  proxy.ts               # Next.js 16 proxy (replaces middleware.ts) — protects /dashboard
 ```
+
+Further feature-based structure (`components/`, `features/`, shared `types/`) will grow as later phases add campaigns, contributions, and admin UI.
 
 ---
 
 ## Getting Started
 
-> Setup commands below are the standard commands for this stack; they will apply once the project is scaffolded (`PLAN.md` Phase 1, Task 2).
-
 ```bash
 npm install
+cp .env.example .env.local   # then point these at your running crowdfunding-server
 npm run dev      # start dev server
 npm run build    # production build
 npm run lint     # ESLint
+npm run format
 ```
 
 ---
 
 ## Environment Variables
 
-| Variable                       | Description                                      |
-| ------------------------------ | ------------------------------------------------ |
-| `NEXT_PUBLIC_API_URL`          | Base URL of the `crowdfunding-server` API        |
-| `NEXT_PUBLIC_BETTER_AUTH_URL`  | Better Auth base URL used by the client          |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth client ID (for Google login button) |
+| Variable                      | Description                                                                                                                  |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL`         | Base URL of the `crowdfunding-server` API                                                                                    |
+| `NEXT_PUBLIC_BETTER_AUTH_URL` | Base URL of the `crowdfunding-server` API (Better Auth is mounted there — same value as `NEXT_PUBLIC_API_URL` in this setup) |
+
+Google OAuth doesn't need any client-side env var — `signIn.social({ provider: "google" })` just redirects to the server, which holds the Google client ID/secret.
 
 ---
 
