@@ -25,3 +25,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/*
+ * @heroui/styles ships an unlayered `a { background-color: transparent }` reset,
+ * which (per CSS Cascade Layers) always beats the layered .button component styles.
+ * This keeps `<Link className={buttonVariants(...)}>` (a real anchor styled as a
+ * button, e.g. Hero CTAs) visible instead of invisible/transparent.
+ */
+a.button {
+  background-color: var(--button-bg);
+  color: var(--button-fg);
+}
+a.button:hover,
+a.button[data-hovered="true"] {
+  background-color: var(--button-bg-hover);
+}
+a.button:active,
+a.button[data-pressed="true"] {
+  background-color: var(--button-bg-pressed);
+}

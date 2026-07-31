@@ -2,7 +2,7 @@
 
 Frontend for **CrowdfundX**, a modern crowdfunding platform. Built with Next.js 16 (App Router) and React 19.
 
-> **Status:** MVP in development. Phase 1 (project init), Phase 2 (Better Auth), and Phase 3 (UI Foundation) are done. See `PLAN.md` for the full roadmap.
+> **Status:** MVP in development. Phases 1–4 (project init, Better Auth, UI Foundation, Landing Page) are done. See `PLAN.md` for the full roadmap.
 
 Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-server) (Express.js + MongoDB API)
 
@@ -34,13 +34,13 @@ Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-ser
 - Placeholder `/dashboard` page proving the auth flow end-to-end (the real dashboard shell is Phase 5)
 - `src/components/ui` — reusable components: `Button`, `Card`, `Input`, `Modal`, `Avatar`, `Table`, `Dropdown` (re-exported from HeroUI v3) and a hand-built compound `Navbar` (`Navbar.Brand`/`Navbar.Content`/`Navbar.Item`) since HeroUI v3 doesn't ship one
 - Icon convention wired up: React Icons for brand/social icons (e.g. the Google button), `@gravity-ui/icons` for dashboard/navigation icons (e.g. the dashboard header)
-- `(public)` route group layout — Navbar + footer, wraps `/`, `/login`, `/register`
+- `(public)` route group layout — real `SiteNavbar` (Logo, Campaigns link, Login/Register when signed out, Dashboard link + avatar/dropdown menu when signed in)
 - `(dashboard)` route group layout — minimal header (full sidebar shell is Phase 5)
+- Landing page (`/`): Hero (headline + CTAs), Featured Campaigns (mock data — real API is Phase 6), How It Works, Categories, Why Choose Us, Footer — see `src/components/landing/`
 
 **Planned:**
 
 - Role-based navigation (Supporter / Creator / Admin)
-- Landing page: Hero, Featured Campaigns grid, How It Works, Categories, Why Choose Us, Footer
 - Campaign pages: list, details, create, edit
 - Contribution form with validation and success state
 - Admin UI: user list + role management, campaign list + delete
@@ -57,22 +57,33 @@ Full task-by-task breakdown lives in [`PLAN.md`](../PLAN.md).
 src/
   app/
     (public)/
-      layout.tsx         # Navbar + footer
-      page.tsx           # home (still default create-next-app content, Phase 4 replaces it)
+      layout.tsx         # SiteNavbar wrapper
+      page.tsx           # landing page — composes the sections below
       login/page.tsx
       register/page.tsx
     (dashboard)/
       layout.tsx         # minimal header (Phase 5 replaces with full shell)
       dashboard/page.tsx # placeholder protected page
-  components/ui/
-    index.ts             # re-exports HeroUI primitives + our Navbar
-    navbar.tsx            # compound Navbar (Root/Brand/Content/Item)
+  components/
+    ui/
+      index.ts           # re-exports HeroUI primitives + our Navbar
+      navbar.tsx          # compound Navbar (Root/Brand/Content/Item)
+    site-navbar.tsx       # the real, auth-aware navbar used in (public)/layout.tsx
+    landing/
+      hero.tsx
+      featured-campaigns.tsx  # mock campaign data — Phase 6 replaces with a real fetch
+      how-it-works.tsx
+      categories.tsx
+      why-choose-us.tsx
+      footer.tsx
   lib/
     auth-client.ts        # Better Auth React client
   proxy.ts                 # Next.js 16 proxy (replaces middleware.ts) — protects /dashboard
 ```
 
 Route groups `(public)`/`(dashboard)` don't affect URLs — `/`, `/login`, `/register`, `/dashboard` are unchanged.
+
+**Styling a `<Link>` as a button:** use `buttonVariants({ variant, size })` from `@heroui/styles` on a Next `<Link>` (see `hero.tsx`) — `@heroui/react`'s `Button` doesn't support `href`. Note `globals.css` has a small override for this: `@heroui/styles` ships an unlayered `a { background-color: transparent }` reset that otherwise wins over the (layered) `.button` styles on any anchor, per CSS Cascade Layers rules.
 
 Further feature-based structure (`components/`, `features/`, shared `types/`) will grow as later phases add campaigns, contributions, and admin UI.
 
