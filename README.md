@@ -2,7 +2,7 @@
 
 Frontend for **CrowdfundX**, a modern crowdfunding platform. Built with Next.js 16 (App Router) and React 19.
 
-> **Status:** MVP in development. Phases 1–8 (project init, Better Auth, UI Foundation, Landing Page, Dashboard, Campaign Module, Contributions, Admin) are done. See `PLAN.md` for the full roadmap.
+> **Status:** MVP in development. Phases 1–9 (project init, Better Auth, UI Foundation, Landing Page, Dashboard, Campaign Module, Contributions, Admin, State Management) are done. See `PLAN.md` for the full roadmap.
 
 Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-server) (Express.js + MongoDB API)
 
@@ -41,6 +41,7 @@ Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-ser
 - `src/lib/api.ts` — thin `apiFetch()` wrapper (base URL + `credentials: "include"`) used for all campaign and contribution API calls; the reusable Axios client is still Phase 12
 - Contribution UI: `ContributeForm` (`src/components/contribute-form.tsx`) embedded in the campaign details page — prompts login if signed out, validates the amount, shows a success state, and calls `router.refresh()` so the campaign's raised-amount progress bar updates immediately without a full reload. `/dashboard/contributions` lists the current user's contributions (campaign title/category/amount/date, via the server's `$lookup`-joined response) with a link back to each campaign.
 - Admin UI: `/dashboard/admin/users` (list + change role via a native `<select>`) and `/dashboard/admin/campaigns` (list all + delete, reusing `CampaignCard`) — both gated by a shared `(dashboard)/dashboard/admin/layout.tsx` that shows "You don't have access to this page" for non-admins. **No new server endpoints were needed**: users list/role-change call Better Auth's own admin plugin endpoints directly (`/api/auth/admin/list-users`, `/api/auth/admin/set-role`, already mounted and permission-checked by Better Auth itself), and campaign management reuses the existing public `GET /campaigns` and `DELETE /campaigns/:id` (which already allowed admin overrides since Phase 6).
+- TanStack Query: `QueryClient` + `QueryClientProvider` (`src/components/providers.tsx`, wrapped around the whole app in the root layout). Every dashboard list that used to be a manual `useEffect` + `.then()` + `ignore`-flag fetch — My Campaigns, My Contributions, Admin Users, Admin Campaigns — is now a `useQuery`. Their mutations (delete campaign in two places, set-role) use `useMutation` with real optimistic updates: `onMutate` snapshots the cache and writes the expected result immediately (e.g. the row disappears / the role dropdown updates before the server responds), `onError` rolls back to the snapshot, `onSettled` invalidates to resync with the server.
 
 **Planned:**
 
@@ -78,6 +79,7 @@ src/
           users/page.tsx       # list + change role
           campaigns/page.tsx   # list all + delete
   components/
+    providers.tsx          # QueryClientProvider, wraps the whole app
     ui/
       index.ts           # re-exports HeroUI primitives + our Navbar
       navbar.tsx          # compound Navbar (Root/Brand/Content/Item)
@@ -116,9 +118,9 @@ Route groups `(public)`/`(dashboard)` don't affect URLs — `/`, `/login`, `/reg
 
 **Trigger components already render a `<button>`:** `Drawer.Trigger`, `Dropdown.Trigger`, `Modal.Trigger` etc. are themselves pressable buttons — don't wrap a `<Button>` inside one (invalid nested `<button>`s, causes a hydration error). Style the trigger directly instead, e.g. `<Drawer.Trigger className={buttonVariants({ variant: "ghost", isIconOnly: true })}>` (see `mobile-nav.tsx`).
 
-**Fetching in a `useEffect`:** ESLint's `react-hooks/set-state-in-effect` rule (part of React 19.2's React Compiler lint rules) flags calling a `useCallback`-wrapped async helper that itself calls `setState` directly from an effect body. Use the inline `.then()` + `ignore` flag pattern instead (see `dashboard/campaigns/page.tsx`) until this fetch is replaced by TanStack Query in Phase 9.
+**Fetching in a `useEffect`:** ESLint's `react-hooks/set-state-in-effect` rule (part of React 19.2's React Compiler lint rules) flags calling a `useCallback`-wrapped async helper that itself calls `setState` directly from an effect body. All the dashboard list pages that used to hit this have been migrated to `useQuery` (Phase 9) and no longer have the problem — if you add a new client-side fetch, reach for `useQuery`/`useMutation` first rather than a manual effect.
 
-Further feature-based structure (`components/`, `features/`, shared `types/`) will grow as later phases add campaigns, contributions, and admin UI.
+Further feature-based structure (`components/`, `features/`, shared `types/`) will grow as later phases add more UI.
 
 ---
 

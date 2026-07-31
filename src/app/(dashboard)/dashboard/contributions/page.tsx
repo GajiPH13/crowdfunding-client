@@ -1,7 +1,7 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 import { formatCurrency } from "@/components/campaign-card";
 import { apiFetch } from "@/lib/api";
@@ -10,29 +10,22 @@ import type { Contribution } from "@/types/contribution";
 
 export default function MyContributionsPage() {
   const { data: session } = authClient.useSession();
-  const [contributions, setContributions] = useState<Contribution[] | null>(null);
 
-  useEffect(() => {
-    if (!session) return;
-
-    let ignore = false;
-
-    apiFetch("/contributions/me")
-      .then((res) => res.json())
-      .then((body: { data: Contribution[] }) => {
-        if (!ignore) setContributions(body.data);
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, [session]);
+  const { data: contributions } = useQuery({
+    queryKey: ["contributions", "me"],
+    queryFn: async () => {
+      const res = await apiFetch("/contributions/me");
+      const body = (await res.json()) as { data: Contribution[] };
+      return body.data;
+    },
+    enabled: Boolean(session),
+  });
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">My Contributions</h1>
 
-      {contributions === null ? (
+      {contributions === undefined ? (
         <p className="text-gray-600 dark:text-gray-400">Loading…</p>
       ) : contributions.length === 0 ? (
         <p className="text-gray-600 dark:text-gray-400">

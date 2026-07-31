@@ -1,8 +1,8 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { buttonVariants } from "@heroui/styles";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 import { CampaignCard } from "@/components/campaign-card";
 import { Button } from "@/components/ui";
@@ -12,28 +12,36 @@ import type { Campaign } from "@/types/campaign";
 
 export default function MyCampaignsPage() {
   const { data: session } = authClient.useSession();
-  const [campaigns, setCampaigns] = useState<Campaign[] | null>(null);
+  const queryClient = useQueryClient();
+  const queryKey = ["campaigns", { creator: session?.user.id }] as const;
 
-  useEffect(() => {
-    if (!session) return;
+  const { data: campaigns } = useQuery({
+    queryKey,
+    queryFn: async () => {
+      const res = await apiFetch(`/campaigns?creator=${session!.user.id}`);
+      const body = (await res.json()) as { data: Campaign[] };
+      return body.data;
+    },
+    enabled: Boolean(session),
+  });
 
-    let ignore = false;
-
-    apiFetch(`/campaigns?creator=${session.user.id}`)
-      .then((res) => res.json())
-      .then((body: { data: Campaign[] }) => {
-        if (!ignore) setCampaigns(body.data);
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, [session]);
-
-  async function handleDelete(id: string) {
-    await apiFetch(`/campaigns/${id}`, { method: "DELETE" });
-    setCampaigns((prev) => prev?.filter((campaign) => campaign._id !== id) ?? null);
-  }
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiFetch(`/campaigns/${id}`, { method: "DELETE" }),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Campaign[]>(queryKey);
+      queryClient.setQueryData<Campaign[]>(queryKey, (prev) =>
+        prev?.filter((campaign) => campaign._id !== id),
+      );
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -44,7 +52,7 @@ export default function MyCampaignsPage() {
         </Link>
       </div>
 
-      {campaigns === null ? (
+      {campaigns === undefined ? (
         <p className="text-gray-600 dark:text-gray-400">Loading…</p>
       ) : campaigns.length === 0 ? (
         <p className="text-gray-600 dark:text-gray-400">
@@ -64,7 +72,11 @@ export default function MyCampaignsPage() {
                   >
                     Edit
                   </Link>
-                  <Button variant="danger" fullWidth onPress={() => handleDelete(campaign._id)}>
+                  <Button
+                    variant="danger"
+                    fullWidth
+                    onPress={() => deleteMutation.mutate(campaign._id)}
+                  >
                     Delete
                   </Button>
                 </div>
