@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 
 import { formatCurrency } from "@/components/campaign-card";
@@ -24,7 +25,20 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
       <p className="text-sm text-gray-500">{campaign.category}</p>
       <h1 className="mt-1 text-3xl font-bold">{campaign.title}</h1>
 
-      <div className="mt-6 h-56 rounded-lg bg-gradient-to-br from-indigo-200 to-purple-200 dark:from-indigo-900 dark:to-purple-900" />
+      {campaign.image ? (
+        <div className="relative mt-6 h-56 w-full overflow-hidden rounded-lg">
+          <Image
+            src={campaign.image}
+            alt={campaign.title}
+            fill
+            sizes="(min-width: 768px) 768px, 100vw"
+            className="object-cover"
+            priority
+          />
+        </div>
+      ) : (
+        <div className="mt-6 h-56 rounded-lg bg-gradient-to-br from-indigo-200 to-purple-200 dark:from-indigo-900 dark:to-purple-900" />
+      )}
 
       <div className="mt-6">
         <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">

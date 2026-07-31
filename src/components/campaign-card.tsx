@@ -1,4 +1,5 @@
 import { buttonVariants } from "@heroui/styles";
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -18,7 +19,19 @@ export function CampaignCard({ campaign, actions }: { campaign: Campaign; action
 
   return (
     <Card>
-      <div className="h-32 rounded-lg bg-gradient-to-br from-indigo-200 to-purple-200 dark:from-indigo-900 dark:to-purple-900" />
+      {campaign.image ? (
+        <div className="relative h-32 w-full overflow-hidden rounded-lg">
+          <Image
+            src={campaign.image}
+            alt={campaign.title}
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover"
+          />
+        </div>
+      ) : (
+        <div className="h-32 rounded-lg bg-gradient-to-br from-indigo-200 to-purple-200 dark:from-indigo-900 dark:to-purple-900" />
+      )}
 
       <Card.Header>
         <Card.Title>{campaign.title}</Card.Title>
