@@ -10,31 +10,31 @@ Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-ser
 
 ## Tech Stack
 
-* Next.js 15 (App Router)
-* React 19
-* TypeScript
-* Tailwind CSS v4
-* HeroUI
-* React Icons (brands/social icons)
-* Gravity UI Icons (dashboard/navigation icons)
-* TanStack Query
-* React Hook Form
-* Zod
-* Axios
+- Next.js 15 (App Router)
+- React 19
+- TypeScript
+- Tailwind CSS v4
+- HeroUI
+- React Icons (brands/social icons)
+- Gravity UI Icons (dashboard/navigation icons)
+- TanStack Query
+- React Hook Form
+- Zod
+- Axios
 
 ---
 
 ## Planned Features
 
-* Login / register pages, session provider, protected routes (Better Auth session cookies)
-* Public layout + Dashboard layout, with role-based navigation (Supporter / Creator / Admin)
-* Landing page: Navbar, Hero, Featured Campaigns grid, How It Works, Categories, Why Choose Us, Footer
-* Campaign pages: list, details, create, edit
-* Contribution form with validation and success state
-* Admin UI: user list + role management, campaign list + delete
-* Reusable component library (HeroUI-based): Button, Card, Input, Modal, Avatar, Table, Navbar, Dropdown
-* Global error/loading pages, toast notifications, empty states
-* Reusable Axios client with auth interceptors
+- Login / register pages, session provider, protected routes (Better Auth session cookies)
+- Public layout + Dashboard layout, with role-based navigation (Supporter / Creator / Admin)
+- Landing page: Navbar, Hero, Featured Campaigns grid, How It Works, Categories, Why Choose Us, Footer
+- Campaign pages: list, details, create, edit
+- Contribution form with validation and success state
+- Admin UI: user list + role management, campaign list + delete
+- Reusable component library (HeroUI-based): Button, Card, Input, Modal, Avatar, Table, Navbar, Dropdown
+- Global error/loading pages, toast notifications, empty states
+- Reusable Axios client with auth interceptors
 
 Full task-by-task breakdown lives in [`PLAN.md`](../PLAN.md).
 
@@ -70,10 +70,10 @@ npm run lint     # ESLint
 
 ## Environment Variables
 
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_API_URL` | Base URL of the `crowdfunding-server` API |
-| `NEXT_PUBLIC_BETTER_AUTH_URL` | Better Auth base URL used by the client |
+| Variable                       | Description                                      |
+| ------------------------------ | ------------------------------------------------ |
+| `NEXT_PUBLIC_API_URL`          | Base URL of the `crowdfunding-server` API        |
+| `NEXT_PUBLIC_BETTER_AUTH_URL`  | Better Auth base URL used by the client          |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth client ID (for Google login button) |
 
 ---
@@ -102,12 +102,12 @@ Frontend-relevant phases from `PLAN.md`:
 
 ## Development Conventions
 
-* TypeScript everywhere, strict mode.
-* Prefer server components; use client components only when necessary.
-* Reuse existing components before creating new ones.
-* Validate all inputs with Zod.
-* Handle loading, empty, and error states for every page.
-* One task at a time, no TODOs left in completed work.
-* Ensure the app builds and lints cleanly before moving to the next task.
+- TypeScript everywhere, strict mode.
+- Prefer server components; use client components only when necessary.
+- Reuse existing components before creating new ones.
+- Validate all inputs with Zod.
+- Handle loading, empty, and error states for every page.
+- One task at a time, no TODOs left in completed work.
+- Ensure the app builds and lints cleanly before moving to the next task.
 
 See [`PLAN.md`](../PLAN.md) for the full AI coding guidelines and definition of done.
