@@ -14,6 +14,13 @@ const labels: Record<string, string> = {
   edit: "Edit",
 };
 
+// Some segments (e.g. "campaigns") mean something different depending on
+// where they appear — override by full path when the plain segment label
+// would be misleading.
+const pathOverrides: Record<string, string> = {
+  "/dashboard/admin/campaigns": "Campaigns",
+};
+
 export function DashboardBreadcrumb() {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
@@ -26,7 +33,7 @@ export function DashboardBreadcrumb() {
 
         return (
           <Breadcrumbs.Item key={href} {...(isLast ? {} : { href })}>
-            {labels[segment] ?? segment}
+            {pathOverrides[href] ?? labels[segment] ?? segment}
           </Breadcrumbs.Item>
         );
       })}

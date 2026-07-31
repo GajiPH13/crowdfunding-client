@@ -2,7 +2,7 @@
 
 Frontend for **CrowdfundX**, a modern crowdfunding platform. Built with Next.js 16 (App Router) and React 19.
 
-> **Status:** MVP in development. Phases 1–7 (project init, Better Auth, UI Foundation, Landing Page, Dashboard, Campaign Module, Contributions) are done. See `PLAN.md` for the full roadmap.
+> **Status:** MVP in development. Phases 1–8 (project init, Better Auth, UI Foundation, Landing Page, Dashboard, Campaign Module, Contributions, Admin) are done. See `PLAN.md` for the full roadmap.
 
 Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-server) (Express.js + MongoDB API)
 
@@ -40,10 +40,10 @@ Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-ser
 - Campaign UI: public `/campaigns` (list) and `/campaigns/[id]` (details) — Server Components fetching straight from the API, no client-side loading state needed; `/dashboard/campaigns` (my campaigns, client-rendered, `?creator=<id>` filtered) with Create/Edit/Delete; shared `CampaignCard` (`src/components/campaign-card.tsx`) used by all three list views; shared `CampaignForm` (`src/components/dashboard/campaign-form.tsx`) used by both create and edit pages. Forms use plain `useState` (React Hook Form + Zod is Phase 10, not yet adopted) with HeroUI's `Input`/`TextArea`/`Button`.
 - `src/lib/api.ts` — thin `apiFetch()` wrapper (base URL + `credentials: "include"`) used for all campaign and contribution API calls; the reusable Axios client is still Phase 12
 - Contribution UI: `ContributeForm` (`src/components/contribute-form.tsx`) embedded in the campaign details page — prompts login if signed out, validates the amount, shows a success state, and calls `router.refresh()` so the campaign's raised-amount progress bar updates immediately without a full reload. `/dashboard/contributions` lists the current user's contributions (campaign title/category/amount/date, via the server's `$lookup`-joined response) with a link back to each campaign.
+- Admin UI: `/dashboard/admin/users` (list + change role via a native `<select>`) and `/dashboard/admin/campaigns` (list all + delete, reusing `CampaignCard`) — both gated by a shared `(dashboard)/dashboard/admin/layout.tsx` that shows "You don't have access to this page" for non-admins. **No new server endpoints were needed**: users list/role-change call Better Auth's own admin plugin endpoints directly (`/api/auth/admin/list-users`, `/api/auth/admin/set-role`, already mounted and permission-checked by Better Auth itself), and campaign management reuses the existing public `GET /campaigns` and `DELETE /campaigns/:id` (which already allowed admin overrides since Phase 6).
 
 **Planned:**
 
-- Admin UI: user list + role management, campaign list + delete
 - Global error/loading pages, toast notifications, empty states
 - Reusable Axios client with auth interceptors
 
@@ -73,6 +73,10 @@ src/
           new/page.tsx       # create campaign
           [id]/edit/page.tsx  # edit campaign
         contributions/page.tsx # my contributions (client)
+        admin/
+          layout.tsx          # guards role === "admin"
+          users/page.tsx       # list + change role
+          campaigns/page.tsx   # list all + delete
   components/
     ui/
       index.ts           # re-exports HeroUI primitives + our Navbar
@@ -102,6 +106,7 @@ src/
   types/
     campaign.ts            # Campaign type, mirrors the server's shape
     contribution.ts         # Contribution type (includes the joined campaign)
+    user.ts                 # AdminUser type (Better Auth's admin list-users response)
   proxy.ts                 # Next.js 16 proxy (replaces middleware.ts) — protects /dashboard
 ```
 
