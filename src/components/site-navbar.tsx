@@ -3,17 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { Avatar, Button, Dropdown, Navbar } from "@/components/ui";
+import { Button, Navbar } from "@/components/ui";
+import { UserMenu } from "@/components/user-menu";
 import { authClient } from "@/lib/auth-client";
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
 
 export function SiteNavbar() {
   const router = useRouter();
@@ -38,24 +30,7 @@ export function SiteNavbar() {
               <Link href="/dashboard">Dashboard</Link>
             </Navbar.Item>
             <Navbar.Item>
-              <Dropdown>
-                <Dropdown.Trigger>
-                  <Avatar>
-                    <Avatar.Fallback>{initials(session.user.name)}</Avatar.Fallback>
-                  </Avatar>
-                </Dropdown.Trigger>
-                <Dropdown.Popover placement="bottom end">
-                  <Dropdown.Menu>
-                    <Dropdown.Item
-                      onAction={() =>
-                        authClient.signOut({ fetchOptions: { onSuccess: () => router.push("/") } })
-                      }
-                    >
-                      Log out
-                    </Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown.Popover>
-              </Dropdown>
+              <UserMenu user={session.user} />
             </Navbar.Item>
           </>
         ) : (

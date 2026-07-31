@@ -2,7 +2,7 @@
 
 Frontend for **CrowdfundX**, a modern crowdfunding platform. Built with Next.js 16 (App Router) and React 19.
 
-> **Status:** MVP in development. Phases 1–4 (project init, Better Auth, UI Foundation, Landing Page) are done. See `PLAN.md` for the full roadmap.
+> **Status:** MVP in development. Phases 1–5 (project init, Better Auth, UI Foundation, Landing Page, Dashboard) are done. See `PLAN.md` for the full roadmap.
 
 Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-server) (Express.js + MongoDB API)
 
@@ -31,16 +31,15 @@ Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-ser
 - Login (`/login`) and register (`/register`) pages using Better Auth's email/password + Google OAuth
 - `src/lib/auth-client.ts` — Better Auth React client (`useSession`, `signIn`, `signUp`, `signOut`); no context provider needed, since Better Auth's hook isn't Context-based
 - Protected routes via `src/proxy.ts` (Next.js 16's replacement for `middleware.ts`): optimistic cookie-presence redirect for `/dashboard`, redirects logged-in users away from `/login`/`/register`
-- Placeholder `/dashboard` page proving the auth flow end-to-end (the real dashboard shell is Phase 5)
-- `src/components/ui` — reusable components: `Button`, `Card`, `Input`, `Modal`, `Avatar`, `Table`, `Dropdown` (re-exported from HeroUI v3) and a hand-built compound `Navbar` (`Navbar.Brand`/`Navbar.Content`/`Navbar.Item`) since HeroUI v3 doesn't ship one
+- `src/components/ui` — reusable components: `Button`, `Card`, `Input`, `Modal`, `Avatar`, `Table`, `Dropdown`, `Drawer`, `Breadcrumbs` (re-exported from HeroUI v3) and a hand-built compound `Navbar` (`Navbar.Brand`/`Navbar.Content`/`Navbar.Item`) since HeroUI v3 doesn't ship one
 - Icon convention wired up: React Icons for brand/social icons (e.g. the Google button), `@gravity-ui/icons` for dashboard/navigation icons (e.g. the dashboard header)
 - `(public)` route group layout — real `SiteNavbar` (Logo, Campaigns link, Login/Register when signed out, Dashboard link + avatar/dropdown menu when signed in)
-- `(dashboard)` route group layout — minimal header (full sidebar shell is Phase 5)
 - Landing page (`/`): Hero (headline + CTAs), Featured Campaigns (mock data — real API is Phase 6), How It Works, Categories, Why Choose Us, Footer — see `src/components/landing/`
+- Dashboard shell (`(dashboard)/layout.tsx`): desktop sidebar + mobile drawer nav (`src/components/dashboard/`), header with breadcrumb + user menu, role-based nav items (Supporter/Creator/Admin — see `nav-items.ts`) driven by `session.user.role`
+- Shared `UserMenu` (`src/components/user-menu.tsx`) — avatar + dropdown with name/email/Log out, used in both the site navbar and the dashboard header
 
 **Planned:**
 
-- Role-based navigation (Supporter / Creator / Admin)
 - Campaign pages: list, details, create, edit
 - Contribution form with validation and success state
 - Admin UI: user list + role management, campaign list + delete
@@ -62,13 +61,14 @@ src/
       login/page.tsx
       register/page.tsx
     (dashboard)/
-      layout.tsx         # minimal header (Phase 5 replaces with full shell)
-      dashboard/page.tsx # placeholder protected page
+      layout.tsx         # sidebar + header shell, redirects if no session
+      dashboard/page.tsx # overview page
   components/
     ui/
       index.ts           # re-exports HeroUI primitives + our Navbar
       navbar.tsx          # compound Navbar (Root/Brand/Content/Item)
     site-navbar.tsx       # the real, auth-aware navbar used in (public)/layout.tsx
+    user-menu.tsx         # shared avatar/dropdown (site navbar + dashboard header)
     landing/
       hero.tsx
       featured-campaigns.tsx  # mock campaign data — Phase 6 replaces with a real fetch
@@ -76,6 +76,13 @@ src/
       categories.tsx
       why-choose-us.tsx
       footer.tsx
+    dashboard/
+      nav-items.ts        # role -> nav items (Supporter/Creator/Admin)
+      sidebar.tsx          # desktop sidebar
+      sidebar-nav.tsx      # shared nav list (desktop sidebar + mobile drawer)
+      mobile-nav.tsx       # HeroUI Drawer-based mobile nav
+      header.tsx           # mobile nav trigger + breadcrumb + user menu
+      breadcrumb.tsx        # derives breadcrumb segments from the pathname
   lib/
     auth-client.ts        # Better Auth React client
   proxy.ts                 # Next.js 16 proxy (replaces middleware.ts) — protects /dashboard
@@ -84,6 +91,8 @@ src/
 Route groups `(public)`/`(dashboard)` don't affect URLs — `/`, `/login`, `/register`, `/dashboard` are unchanged.
 
 **Styling a `<Link>` as a button:** use `buttonVariants({ variant, size })` from `@heroui/styles` on a Next `<Link>` (see `hero.tsx`) — `@heroui/react`'s `Button` doesn't support `href`. Note `globals.css` has a small override for this: `@heroui/styles` ships an unlayered `a { background-color: transparent }` reset that otherwise wins over the (layered) `.button` styles on any anchor, per CSS Cascade Layers rules.
+
+**Trigger components already render a `<button>`:** `Drawer.Trigger`, `Dropdown.Trigger`, `Modal.Trigger` etc. are themselves pressable buttons — don't wrap a `<Button>` inside one (invalid nested `<button>`s, causes a hydration error). Style the trigger directly instead, e.g. `<Drawer.Trigger className={buttonVariants({ variant: "ghost", isIconOnly: true })}>` (see `mobile-nav.tsx`).
 
 Further feature-based structure (`components/`, `features/`, shared `types/`) will grow as later phases add campaigns, contributions, and admin UI.
 
