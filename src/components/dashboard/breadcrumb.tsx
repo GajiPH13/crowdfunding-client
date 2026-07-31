@@ -10,6 +10,8 @@ const labels: Record<string, string> = {
   campaigns: "My Campaigns",
   admin: "Admin",
   users: "Users",
+  new: "New",
+  edit: "Edit",
 };
 
 export function DashboardBreadcrumb() {

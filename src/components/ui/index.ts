@@ -8,5 +8,6 @@ export {
   Input,
   Modal,
   Table,
+  TextArea,
 } from "@heroui/react";
 export { Navbar } from "./navbar";

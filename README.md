@@ -2,7 +2,7 @@
 
 Frontend for **CrowdfundX**, a modern crowdfunding platform. Built with Next.js 16 (App Router) and React 19.
 
-> **Status:** MVP in development. Phases 1–5 (project init, Better Auth, UI Foundation, Landing Page, Dashboard) are done. See `PLAN.md` for the full roadmap.
+> **Status:** MVP in development. Phases 1–6 (project init, Better Auth, UI Foundation, Landing Page, Dashboard, Campaign Module) are done. See `PLAN.md` for the full roadmap.
 
 Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-server) (Express.js + MongoDB API)
 
@@ -34,13 +34,14 @@ Related repo: [crowdfunding-server](https://github.com/GajiPH13/crowdfunding-ser
 - `src/components/ui` — reusable components: `Button`, `Card`, `Input`, `Modal`, `Avatar`, `Table`, `Dropdown`, `Drawer`, `Breadcrumbs` (re-exported from HeroUI v3) and a hand-built compound `Navbar` (`Navbar.Brand`/`Navbar.Content`/`Navbar.Item`) since HeroUI v3 doesn't ship one
 - Icon convention wired up: React Icons for brand/social icons (e.g. the Google button), `@gravity-ui/icons` for dashboard/navigation icons (e.g. the dashboard header)
 - `(public)` route group layout — real `SiteNavbar` (Logo, Campaigns link, Login/Register when signed out, Dashboard link + avatar/dropdown menu when signed in)
-- Landing page (`/`): Hero (headline + CTAs), Featured Campaigns (mock data — real API is Phase 6), How It Works, Categories, Why Choose Us, Footer — see `src/components/landing/`
+- Landing page (`/`): Hero (headline + CTAs), Featured Campaigns (now a real fetch to `crowdfunding-server`, see below), How It Works, Categories, Why Choose Us, Footer — see `src/components/landing/`
 - Dashboard shell (`(dashboard)/layout.tsx`): desktop sidebar + mobile drawer nav (`src/components/dashboard/`), header with breadcrumb + user menu, role-based nav items (Supporter/Creator/Admin — see `nav-items.ts`) driven by `session.user.role`
 - Shared `UserMenu` (`src/components/user-menu.tsx`) — avatar + dropdown with name/email/Log out, used in both the site navbar and the dashboard header
+- Campaign UI: public `/campaigns` (list) and `/campaigns/[id]` (details) — Server Components fetching straight from the API, no client-side loading state needed; `/dashboard/campaigns` (my campaigns, client-rendered, `?creator=<id>` filtered) with Create/Edit/Delete; shared `CampaignCard` (`src/components/campaign-card.tsx`) used by all three list views; shared `CampaignForm` (`src/components/dashboard/campaign-form.tsx`) used by both create and edit pages. Forms use plain `useState` (React Hook Form + Zod is Phase 10, not yet adopted) with HeroUI's `Input`/`TextArea`/`Button`.
+- `src/lib/api.ts` — thin `apiFetch()` wrapper (base URL + `credentials: "include"`) used for all campaign API calls; the reusable Axios client is still Phase 12
 
 **Planned:**
 
-- Campaign pages: list, details, create, edit
 - Contribution form with validation and success state
 - Admin UI: user list + role management, campaign list + delete
 - Global error/loading pages, toast notifications, empty states
@@ -60,18 +61,27 @@ src/
       page.tsx           # landing page — composes the sections below
       login/page.tsx
       register/page.tsx
+      campaigns/
+        page.tsx          # public campaign list (Server Component)
+        [id]/page.tsx      # public campaign details (Server Component)
     (dashboard)/
       layout.tsx         # sidebar + header shell, redirects if no session
-      dashboard/page.tsx # overview page
+      dashboard/
+        page.tsx          # overview page
+        campaigns/
+          page.tsx          # my campaigns (client, ?creator=<id>)
+          new/page.tsx       # create campaign
+          [id]/edit/page.tsx  # edit campaign
   components/
     ui/
       index.ts           # re-exports HeroUI primitives + our Navbar
       navbar.tsx          # compound Navbar (Root/Brand/Content/Item)
     site-navbar.tsx       # the real, auth-aware navbar used in (public)/layout.tsx
     user-menu.tsx         # shared avatar/dropdown (site navbar + dashboard header)
+    campaign-card.tsx     # shared campaign card (also exports formatCurrency)
     landing/
       hero.tsx
-      featured-campaigns.tsx  # mock campaign data — Phase 6 replaces with a real fetch
+      featured-campaigns.tsx  # real fetch to crowdfunding-server (Server Component)
       how-it-works.tsx
       categories.tsx
       why-choose-us.tsx
@@ -83,8 +93,12 @@ src/
       mobile-nav.tsx       # HeroUI Drawer-based mobile nav
       header.tsx           # mobile nav trigger + breadcrumb + user menu
       breadcrumb.tsx        # derives breadcrumb segments from the pathname
+      campaign-form.tsx      # shared create/edit form
   lib/
     auth-client.ts        # Better Auth React client
+    api.ts                 # apiFetch() — base URL + credentials wrapper
+  types/
+    campaign.ts            # Campaign type, mirrors the server's shape
   proxy.ts                 # Next.js 16 proxy (replaces middleware.ts) — protects /dashboard
 ```
 
@@ -93,6 +107,8 @@ Route groups `(public)`/`(dashboard)` don't affect URLs — `/`, `/login`, `/reg
 **Styling a `<Link>` as a button:** use `buttonVariants({ variant, size })` from `@heroui/styles` on a Next `<Link>` (see `hero.tsx`) — `@heroui/react`'s `Button` doesn't support `href`. Note `globals.css` has a small override for this: `@heroui/styles` ships an unlayered `a { background-color: transparent }` reset that otherwise wins over the (layered) `.button` styles on any anchor, per CSS Cascade Layers rules.
 
 **Trigger components already render a `<button>`:** `Drawer.Trigger`, `Dropdown.Trigger`, `Modal.Trigger` etc. are themselves pressable buttons — don't wrap a `<Button>` inside one (invalid nested `<button>`s, causes a hydration error). Style the trigger directly instead, e.g. `<Drawer.Trigger className={buttonVariants({ variant: "ghost", isIconOnly: true })}>` (see `mobile-nav.tsx`).
+
+**Fetching in a `useEffect`:** ESLint's `react-hooks/set-state-in-effect` rule (part of React 19.2's React Compiler lint rules) flags calling a `useCallback`-wrapped async helper that itself calls `setState` directly from an effect body. Use the inline `.then()` + `ignore` flag pattern instead (see `dashboard/campaigns/page.tsx`) until this fetch is replaced by TanStack Query in Phase 9.
 
 Further feature-based structure (`components/`, `features/`, shared `types/`) will grow as later phases add campaigns, contributions, and admin UI.
 
