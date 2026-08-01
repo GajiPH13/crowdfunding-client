@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -48,42 +49,69 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-full max-w-sm flex-col justify-center gap-6 px-4 py-12">
-      <h1 className="text-2xl font-semibold">Register</h1>
+    <main className="px-6 py-12 md:py-20">
+      <div className="mx-auto grid max-w-5xl gap-12 md:grid-cols-2 md:items-center">
+        <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Create your account</h1>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Start a campaign or support one you believe in.
+            </p>
+          </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <FormField label="Name" error={errors.name}>
-          <Input type="text" autoComplete="name" {...register("name")} />
-        </FormField>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <FormField label="Name" error={errors.name}>
+              <Input type="text" autoComplete="name" {...register("name")} />
+            </FormField>
 
-        <FormField label="Email" error={errors.email}>
-          <Input type="email" autoComplete="email" {...register("email")} />
-        </FormField>
+            <FormField label="Email" error={errors.email}>
+              <Input type="email" autoComplete="email" {...register("email")} />
+            </FormField>
 
-        <FormField label="Password" error={errors.password}>
-          <Input type="password" autoComplete="new-password" {...register("password")} />
-        </FormField>
+            <FormField label="Password" error={errors.password}>
+              <Input type="password" autoComplete="new-password" {...register("password")} />
+            </FormField>
 
-        <Button type="submit" isDisabled={isSubmitting} fullWidth>
-          {isSubmitting ? "Creating account…" : "Register"}
-        </Button>
-      </form>
+            <Button type="submit" isDisabled={isSubmitting} fullWidth>
+              {isSubmitting ? "Creating account…" : "Register"}
+            </Button>
+          </form>
 
-      <Button
-        variant="outline"
-        fullWidth
-        onPress={() => authClient.signIn.social({ provider: "google", callbackURL: "/dashboard" })}
-      >
-        <FaGoogle aria-hidden />
-        Continue with Google
-      </Button>
+          <div className="flex items-center gap-3 text-sm text-gray-500">
+            <span className="h-px flex-1 bg-border" />
+            or
+            <span className="h-px flex-1 bg-border" />
+          </div>
 
-      <p className="text-sm">
-        Already have an account?{" "}
-        <Link href="/login" className="underline">
-          Log in
-        </Link>
-      </p>
+          <Button
+            variant="outline"
+            fullWidth
+            onPress={() =>
+              authClient.signIn.social({ provider: "google", callbackURL: "/dashboard" })
+            }
+          >
+            <FaGoogle aria-hidden />
+            Continue with Google
+          </Button>
+
+          <p className="text-sm">
+            Already have an account?{" "}
+            <Link href="/login" className="font-medium underline">
+              Log in
+            </Link>
+          </p>
+        </div>
+
+        <div className="relative hidden aspect-[4/5] overflow-hidden rounded-2xl shadow-xl shadow-accent/10 md:block">
+          <Image
+            src="https://picsum.photos/seed/crowdfundx-register/900/900"
+            alt="A creator preparing to launch their campaign"
+            fill
+            sizes="480px"
+            className="object-cover"
+          />
+        </div>
+      </div>
     </main>
   );
 }
