@@ -4,15 +4,19 @@ function join(...classes: Array<string | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-function NavbarRoot({ className, ...props }: ComponentProps<"nav">) {
+function NavbarRoot({ className, children, ...props }: ComponentProps<"nav">) {
   return (
     <nav
       className={join(
-        "flex items-center justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-800",
+        "sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md",
         className,
       )}
       {...props}
-    />
+    >
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
+        {children}
+      </div>
+    </nav>
   );
 }
 

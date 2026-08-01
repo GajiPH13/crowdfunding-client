@@ -2,6 +2,7 @@
 
 import { buttonVariants } from "@heroui/styles";
 import { Bars } from "@gravity-ui/icons";
+import Link from "next/link";
 import { useState } from "react";
 
 import { Drawer } from "@/components/ui";
@@ -24,7 +25,11 @@ export function MobileNav({ items }: { items: NavItem[] }) {
         <Drawer.Content placement="left">
           <Drawer.Dialog>
             <Drawer.Header>
-              <Drawer.Heading>CrowdfundX</Drawer.Heading>
+              <Drawer.Heading>
+                <Link href="/" onClick={() => setIsOpen(false)} aria-label="Go to CrowdfundX home page">
+                  CrowdfundX
+                </Link>
+              </Drawer.Heading>
             </Drawer.Header>
             <Drawer.Body>
               <SidebarNav items={items} onNavigate={() => setIsOpen(false)} />
